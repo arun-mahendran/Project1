@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<link rel="icon" type="image/png" href="{{ url_for('static', filename='tunex.png') }}">
 <title>TuneX | Listen</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -13,9 +14,10 @@
   --text: #ffffff;
   --muted: rgba(255,255,255,0.65);
   --accent: #4fd1ff;
+  --danger: #ff6b6b;
   --radius: 18px;
   --blur: blur(14px);
-  --transition: all 0.3s ease;
+  --transition: all 0.25s ease;
 }
 
 body.light {
@@ -24,6 +26,7 @@ body.light {
   --border: rgba(0,0,0,0.08);
   --text: #111;
   --muted: rgba(0,0,0,0.6);
+  --danger: #ef4444;
 }
 
 body {
@@ -33,11 +36,27 @@ body {
   color: var(--text);
 }
 
+/* OVERLAY */
+#overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.25);
+  backdrop-filter: blur(3px);
+  opacity: 0;
+  pointer-events: none;
+  transition: var(--transition);
+  z-index: 15;
+}
+#overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
 /* HEADER */
 header {
   position: sticky;
   top: 0;
-  z-index: 10;
+  z-index: 20;
   padding: 18px 36px;
   display: flex;
   justify-content: space-between;
@@ -47,17 +66,16 @@ header {
   border-bottom: 1px solid var(--border);
 }
 
-body.light header {
-  background: rgba(255,255,255,0.75);
-}
-
 .logo {
   font-size: 22px;
   font-weight: 700;
 }
 
 /* AVATAR */
-.avatar-wrapper { position: relative; }
+.avatar-wrapper {
+  position: relative;
+  z-index: 30;
+}
 
 .avatar {
   width: 42px;
@@ -83,6 +101,7 @@ body.light header {
   pointer-events: none;
   transform: translateY(-10px);
   transition: var(--transition);
+  z-index: 120;
 }
 
 .menu.active {
@@ -93,9 +112,7 @@ body.light header {
 
 .menu button,
 .menu a {
-  display: block;
   width: 100%;
-  box-sizing: border-box;
   padding: 12px 16px;
   background: none;
   border: none;
@@ -117,74 +134,250 @@ body.light header {
   border-right: 1px solid var(--border);
 }
 
-.sidebar h3 {
-  margin-bottom: 12px;
-}
-
 .nav-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   border-radius: 10px;
   margin-bottom: 6px;
-  cursor: pointer;
-  transition: var(--transition);
+  padding-right: 8px;
+  position: relative;
 }
 
 .nav-item a {
-  display: block;
-  width: 100%;
+  flex: 1;
   padding: 10px;
-  box-sizing: border-box;
   color: inherit;
   text-decoration: none;
-}
-
-.nav-item:hover {
-  background: rgba(255,255,255,0.12);
 }
 
 .nav-item.active {
   background: rgba(79,209,255,0.25);
 }
 
-.sidebar input {
+/* PLAYLIST MENU */
+.playlist-actions {
+  cursor: pointer;
+  color: var(--muted);
+  padding: 6px;
+}
+
+.playlist-menu {
+  position: absolute;
+  left: 100%;
+  top: 0;
+  margin-left: 10px;
+  background: var(--glass);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  min-width: 180px;
+  opacity: 0;
+  transform: translateY(6px);
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  z-index: 50;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+}
+
+body.light .playlist-menu {
+  background: #ffffff;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.12);
+}
+
+.playlist-menu.active {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.playlist-menu input,
+.playlist-menu button {
   width: 100%;
   padding: 10px;
-  border-radius: 10px;
+  background: none;
   border: none;
-  background: rgba(255,255,255,0.18);
   color: var(--text);
-  margin-top: 12px;
+  text-align: left;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border);
 }
 
-/* CONTENT */
+.playlist-menu button:hover {
+  background: rgba(79,209,255,0.15);
+}
+
+/* CREATE PLAYLIST */
+.create-playlist {
+  margin-top: 14px;
+}
+
+.create-playlist form {
+  display: flex;
+  gap: 8px;
+}
+
+.create-playlist input {
+  flex: 1;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--glass);
+  color: var(--text);
+}
+
+.create-playlist button {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: none;
+  background: var(--accent);
+  color: #000;
+  cursor: pointer;
+}
+
+/* SONG AREA */
 .container {
   padding: 40px;
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
 }
 
+/* SEARCH + SORT HEADER */
+.search-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  gap: 16px;
+}
+
+#search {
+  flex: 1;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--glass);
+  color: var(--text);
+  font-size: 16px;
+}
+
+.sort-btn {
+  padding: 10px 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--glass);
+  color: var(--text);
+  cursor: pointer;
+  white-space: nowrap;
+  font-size: 14px;
+}
+
+.sort-btn:hover {
+  background: rgba(79,209,255,0.15);
+}
+
+/* TRACK */
 .track {
   background: var(--glass);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 20px;
   margin-bottom: 20px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  cursor: grab;
+}
+
+.track.dragging {
+  opacity: 0.5;
+  background: rgba(79,209,255,0.2);
+}
+
+.track > strong {
+  flex: 1 1 200px;
+  min-width: 180px;
+  font-size: 1.1em;
+}
+
+.track > audio {
+  flex: 2 1 300px;
+  min-width: 250px;
+}
+
+.track > .actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+/* TRASH ICON FOR REMOVE - IMPROVED VISIBILITY */
+.remove-btn {
+  font-size: 24px !important; /* Larger and bolder */
+  color: var(--danger) !important;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
   transition: var(--transition);
+  line-height: 1;
 }
 
-.track:hover {
-  transform: translateY(-4px);
+.remove-btn:hover {
+  background: rgba(255, 107, 107, 0.2);
+  transform: scale(1.1);
 }
 
-audio {
-  width: 100%;
-  margin-top: 10px;
+/* CURRENTLY PLAYING INDICATOR */
+.track.playing::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 12px;
+  bottom: 12px;
+  width: 5px;
+  border-radius: 6px;
+  background: var(--accent);
+}
+
+/* ADD TO PLAYLIST */
+.add-to-playlist {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.add-to-playlist select,
+.add-to-playlist button {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--glass);
+  color: var(--text);
+}
+
+#no-results {
+  text-align: center;
+  padding: 20px;
+  color: var(--muted);
+}
+
+/* HIDDEN GENRE FOR SEARCH ONLY */
+.genre {
+  display: none;
 }
 </style>
 </head>
 
 <body>
 
+<div id="overlay" onclick="closeMenu()"></div>
+
 <header>
   <div class="logo">TuneX</div>
-
   <div class="avatar-wrapper">
     <div class="avatar" onclick="toggleMenu()">
       {{ username[0]|upper }}
@@ -199,7 +392,7 @@ audio {
 <div class="layout">
 
   <div class="sidebar">
-    <h3>Your Library</h3>
+    <h3>Welcome, {{ username }} 👋</h3>
 
     <div class="nav-item {% if not active_playlist %}active{% endif %}">
       <a href="/dashboard/user">🎵 All Songs</a>
@@ -208,14 +401,30 @@ audio {
     <h3 style="margin-top:20px;">Your Playlists</h3>
 
     {% for p in playlists %}
-      <div class="nav-item {% if active_playlist and active_playlist.playlist_id == p.playlist_id %}active{% endif %}">
-        <a href="/playlist/{{ p.playlist_id }}">{{ p.playlist_name }}</a>
+    <div class="nav-item {% if active_playlist and active_playlist.playlist_id == p.playlist_id %}active{% endif %}">
+      <a href="/playlist/{{ p.playlist_id }}">{{ p.playlist_name }}</a>
+      <span class="playlist-actions"
+            onclick="event.stopPropagation(); togglePlaylistMenu({{ p.playlist_id }})">⋮</span>
+
+      <div class="playlist-menu" id="menu-{{ p.playlist_id }}"
+           onclick="event.stopPropagation()">
+        <form action="/playlist/rename/{{ p.playlist_id }}" method="POST">
+          <input name="name" placeholder="Rename playlist" required>
+          <button type="submit">Rename</button>
+        </form>
+        <form action="/playlist/delete/{{ p.playlist_id }}" method="POST">
+          <button type="submit">Delete</button>
+        </form>
       </div>
+    </div>
     {% endfor %}
 
-    <form action="/playlist/create" method="POST">
-      <input name="name" placeholder="+ New Playlist" required>
-    </form>
+    <div class="create-playlist">
+      <form action="/playlist/create" method="POST">
+        <input name="name" placeholder="New playlist" required>
+        <button type="submit">+</button>
+      </form>
+    </div>
   </div>
 
   <div class="container">
@@ -227,14 +436,54 @@ audio {
       {% endif %}
     </h1>
 
-    {% for song in songs %}
-    <div class="track">
-      <strong>{{ song.title }}</strong>
-      <audio controls>
-        <source src="/{{ song.file_path }}">
-      </audio>
+    <!-- SEARCH + SORT -->
+    <div class="search-header">
+      <input type="text" id="search" placeholder="Search songs by title or genre...">
+      {% if active_playlist %}
+      <button class="sort-btn" id="sortBtn" onclick="toggleSort()">Sort A→Z</button>
+      {% endif %}
     </div>
-    {% endfor %}
+
+    <div id="songs-list">
+      {% for song in songs %}
+      <div class="track" draggable="true" data-song-id="{{ song.song_id }}">
+        <strong>{{ song.title }}</strong>
+        <span class="genre">{{ song.genre.genre_name }}</span>
+
+        <audio controls>
+          <source src="/{{ song.file_path }}">
+        </audio>
+
+        <!-- Only show Add button if viewing All Songs -->
+        {% if not active_playlist %}
+        <div class="add-to-playlist">
+          <form action="/playlist/add" method="POST">
+            <input type="hidden" name="song_id" value="{{ song.song_id }}">
+            <select name="playlist_id" required>
+              {% for p in playlists %}
+              <option value="{{ p.playlist_id }}">{{ p.playlist_name }}</option>
+              {% endfor %}
+            </select>
+            <button type="submit">Add</button>
+          </form>
+        </div>
+        {% endif %}
+
+        <!-- Trash icon to remove from playlist - NOW VERY CLEAR -->
+        {% if active_playlist %}
+        <div class="actions">
+          <form action="/playlist/remove" method="POST" style="display:inline;">
+            <input type="hidden" name="playlist_id" value="{{ active_playlist.playlist_id }}">
+            <input type="hidden" name="song_id" value="{{ song.song_id }}">
+            <button type="submit" class="remove-btn" title="Remove from playlist">🗑</button>
+          </form>
+        </div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+
+    <div id="no-results" style="display: none;">No such songs found</div>
   </div>
 
 </div>
@@ -242,14 +491,17 @@ audio {
 <script>
 function toggleMenu() {
   document.getElementById("menu").classList.toggle("active");
+  document.getElementById("overlay").classList.toggle("active");
+}
+
+function closeMenu() {
+  document.getElementById("menu").classList.remove("active");
+  document.getElementById("overlay").classList.remove("active");
 }
 
 function toggleTheme() {
-  document.body.classList.toggle("light");
-  localStorage.setItem(
-    "theme",
-    document.body.classList.contains("light") ? "light" : "dark"
-  );
+  const isLight = document.body.classList.toggle("light");
+  localStorage.setItem("theme", isLight ? "light" : "dark");
 }
 
 (function () {
@@ -258,13 +510,135 @@ function toggleTheme() {
   }
 })();
 
-/* One song at a time */
-const players = document.querySelectorAll("audio");
-players.forEach(p => {
-  p.addEventListener("play", () => {
-    players.forEach(o => { if (o !== p) o.pause(); });
+function togglePlaylistMenu(id) {
+  document.querySelectorAll(".playlist-menu").forEach(m => m.classList.remove("active"));
+  document.getElementById("menu-" + id).classList.toggle("active");
+}
+
+document.addEventListener("click", () => {
+  document.querySelectorAll(".playlist-menu").forEach(m => m.classList.remove("active"));
+});
+
+/* CURRENTLY PLAYING */
+const audios = document.querySelectorAll("audio");
+audios.forEach(currentAudio => {
+  currentAudio.addEventListener("play", () => {
+    audios.forEach(otherAudio => {
+      if (otherAudio !== currentAudio) {
+        otherAudio.pause();
+        otherAudio.currentTime = 0;
+        otherAudio.closest(".track")?.classList.remove("playing");
+      }
+    });
+    currentAudio.closest(".track").classList.add("playing");
+  });
+  currentAudio.addEventListener("ended", () => {
+    currentAudio.closest(".track").classList.remove("playing");
   });
 });
+
+/* SEARCH */
+const searchInput = document.getElementById("search");
+const tracks = document.querySelectorAll("#songs-list .track");
+searchInput.addEventListener("input", () => {
+  const query = searchInput.value.trim().toLowerCase();
+  let hasResults = false;
+  tracks.forEach(track => {
+    const title = track.querySelector("strong").textContent.toLowerCase();
+    const genre = track.querySelector(".genre").textContent.trim().toLowerCase();
+    if (query === "" || title.includes(query) || genre.includes(query)) {
+      track.style.display = "flex";
+      hasResults = true;
+    } else {
+      track.style.display = "none";
+    }
+  });
+  document.getElementById("no-results").style.display = hasResults ? "none" : "block";
+});
+
+/* SORT FUNCTIONALITY (only in playlist view) */
+let isSortedAlphabetically = false;
+
+function toggleSort() {
+  isSortedAlphabetically = !isSortedAlphabetically;
+  const sortBtn = document.getElementById("sortBtn");
+  sortBtn.textContent = isSortedAlphabetically ? "Original Order" : "Sort A→Z";
+
+  const container = document.getElementById("songs-list");
+  const trackArray = Array.from(container.querySelectorAll(".track"));
+
+  if (isSortedAlphabetically) {
+    trackArray.sort((a, b) => {
+      const titleA = a.querySelector("strong").textContent.trim();
+      const titleB = b.querySelector("strong").textContent.trim();
+      return titleA.localeCompare(titleB);
+    });
+  } else {
+    // Restore original order
+    trackArray.sort((a, b) => {
+      return a.dataset.originalIndex - b.dataset.originalIndex;
+    });
+  }
+
+  // Re-append in new order
+  trackArray.forEach(track => container.appendChild(track));
+}
+
+/* Preserve original order for sorting back */
+document.querySelectorAll("#songs-list .track").forEach((track, index) => {
+  track.dataset.originalIndex = index;
+});
+
+/* DRAG & DROP REORDERING (only in playlist view) */
+{% if active_playlist %}
+let draggedTrack = null;
+
+tracks.forEach(track => {
+  track.addEventListener("dragstart", e => {
+    draggedTrack = track;
+    track.classList.add("dragging");
+  });
+
+  track.addEventListener("dragend", () => {
+    track.classList.remove("dragging");
+    draggedTrack = null;
+    updatePlaylistOrder();
+  });
+
+  track.addEventListener("dragover", e => {
+    e.preventDefault();
+  });
+
+  track.addEventListener("drop", e => {
+    e.preventDefault();
+    if (draggedTrack && draggedTrack !== track) {
+      const allTracks = Array.from(document.querySelectorAll("#songs-list .track"));
+      const fromIndex = allTracks.indexOf(draggedTrack);
+      const toIndex = allTracks.indexOf(track);
+
+      if (fromIndex < toIndex) {
+        track.parentNode.insertBefore(draggedTrack, track.nextSibling);
+      } else {
+        track.parentNode.insertBefore(draggedTrack, track);
+      }
+    }
+  });
+});
+
+function updatePlaylistOrder() {
+  const trackElements = document.querySelectorAll("#songs-list .track");
+  const newOrder = Array.from(trackElements).map((t, index) => ({
+    song_id: t.dataset.songId,
+    position: index + 1
+  }));
+
+  fetch('/playlist/reorder/{{ active_playlist.playlist_id }}', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ order: newOrder })
+  });
+}
+{% endif %}
 </script>
 
 </body>

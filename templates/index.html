@@ -1,253 +1,287 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>TuneX | Music Streaming</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<title>TuneX | Music Streaming</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: Arial, Helvetica, sans-serif;
-        }
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: Arial, Helvetica, sans-serif;
+}
 
-        body {
-            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
-            color: #ffffff;
-            min-height: 100vh;
-        }
+body {
+  background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+  color: #ffffff;
+  min-height: 100vh;
+  animation: pageFade 0.8s ease both;
+}
 
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 20px 60px;
-            background-color: rgba(0, 0, 0, 0.5);
-        }
+/* PAGE FADE */
+@keyframes pageFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
 
-        .logo {
-            font-size: 26px;
-            font-weight: bold;
-            color: #4fd1ff;
-        }
+/* HEADER */
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 60px;
+  background-color: rgba(0, 0, 0, 0.5);
+  animation: slideDown 0.7s ease both;
+}
 
-        nav button {
-            margin-left: 15px;
-            padding: 10px 22px;
-            border-radius: 20px;
-            border: none;
-            cursor: pointer;
-            font-size: 14px;
-            transition: all 0.3s ease;
-        }
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 
-        .login-btn {
-            background-color: transparent;
-            color: white;
-            border: 1px solid #4fd1ff;
-        }
+.logo {
+  font-size: 26px;
+  font-weight: bold;
+  color: #4fd1ff;
+}
 
-        .login-btn:hover {
-            background-color: #4fd1ff;
-            color: black;
-            transform: translateY(-3px) scale(1.05);
-            box-shadow: 0 8px 20px rgba(79,209,255,0.4);
-        }
+/* NAV BUTTONS */
+nav button {
+  margin-left: 15px;
+  padding: 10px 22px;
+  border-radius: 20px;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
 
-        .register-btn {
-            background-color: #4fd1ff;
-            color: black;
-            font-weight: bold;
-        }
+.login-btn {
+  background-color: transparent;
+  color: white;
+  border: 1px solid #4fd1ff;
+}
 
-        .register-btn:hover {
-            background-color: #72e3ff;
-            transform: translateY(-3px) scale(1.08);
-            box-shadow: 0 10px 25px rgba(79,209,255,0.6);
-        }
+.login-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(79,209,255,0.4);
+}
 
-        .hero {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            padding: 100px 20px;
-        }
+.register-btn {
+  background-color: #4fd1ff;
+  color: black;
+  font-weight: bold;
+}
 
-        .hero h1 {
-            font-size: 48px;
-            margin-bottom: 20px;
-        }
+.register-btn:hover {
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 10px 25px rgba(79,209,255,0.6);
+}
 
-        .hero p {
-            font-size: 18px;
-            max-width: 600px;
-            margin-bottom: 30px;
-            color: #d0e6ef;
-        }
+/* HERO */
+.hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 100px 20px;
+  animation: heroUp 0.9s ease both;
+}
 
-        .hero button {
-            padding: 14px 32px;
-            font-size: 16px;
-            border-radius: 25px;
-            border: none;
-            cursor: pointer;
-            background-color: #4fd1ff;
-            font-weight: bold;
-            transition: all 0.3s ease;
-        }
+@keyframes heroUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 
-        .hero button:hover {
-            background-color: #72e3ff;
-            transform: translateY(-4px) scale(1.1);
-            box-shadow: 0 12px 30px rgba(79,209,255,0.7);
-        }
+.hero h1 {
+  font-size: 48px;
+  margin-bottom: 20px;
+}
 
-        .features {
-            display: flex;
-            justify-content: center;
-            gap: 40px;
-            padding: 60px 40px;
-            flex-wrap: wrap;
-        }
+.hero p {
+  font-size: 18px;
+  max-width: 600px;
+  margin-bottom: 30px;
+  color: #d0e6ef;
+}
 
-        .feature-card {
-            background-color: rgba(0, 0, 0, 0.35);
-            padding: 30px;
-            width: 260px;
-            border-radius: 12px;
-            text-align: center;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
+.hero button {
+  padding: 14px 32px;
+  font-size: 16px;
+  border-radius: 25px;
+  border: none;
+  cursor: pointer;
+  background-color: #4fd1ff;
+  font-weight: bold;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
 
-        .feature-card:hover {
-            transform: translateY(-6px);
-            box-shadow: 0 12px 25px rgba(0,0,0,0.6);
-        }
+.hero button:hover {
+  transform: translateY(-4px) scale(1.08);
+  box-shadow: 0 12px 30px rgba(79,209,255,0.7);
+}
 
-        .feature-card h3 {
-            margin-bottom: 15px;
-            color: #4fd1ff;
-        }
+/* FEATURES */
+.features {
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+  padding: 60px 40px;
+  flex-wrap: wrap;
+}
 
-        .feature-card p {
-            font-size: 14px;
-            color: #d0e6ef;
-        }
+.feature-card {
+  background-color: rgba(0, 0, 0, 0.35);
+  padding: 30px;
+  width: 260px;
+  border-radius: 12px;
+  text-align: center;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
 
-        footer {
-            text-align: center;
-            padding: 20px;
-            font-size: 13px;
-            color: #b0cbd6;
-            background-color: rgba(0, 0, 0, 0.6);
-        }
+.feature-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 25px rgba(0,0,0,0.6);
+}
 
-        /* ---------- ROLE MODAL ---------- */
-        .modal {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.75);
-            justify-content: center;
-            align-items: center;
-        }
+.feature-card h3 {
+  margin-bottom: 15px;
+  color: #4fd1ff;
+}
 
-        .modal-box {
-            background: rgba(0,0,0,0.9);
-            padding: 30px;
-            border-radius: 14px;
-            width: 280px;
-            text-align: center;
-        }
+.feature-card p {
+  font-size: 14px;
+  color: #d0e6ef;
+}
 
-        .modal-box h3 {
-            margin-bottom: 20px;
-        }
+/* FOOTER */
+footer {
+  text-align: center;
+  padding: 20px;
+  font-size: 13px;
+  color: #b0cbd6;
+  background-color: rgba(0, 0, 0, 0.6);
+}
 
-        .modal-box button {
-            width: 100%;
-            margin: 8px 0;
-            padding: 10px;
-            border-radius: 20px;
-            border: none;
-            cursor: pointer;
-            background-color: #4fd1ff;
-            font-weight: bold;
-        }
-    </style>
+/* ---------- ROLE MODAL ---------- */
+.modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.75);
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-box {
+  background: rgba(0,0,0,0.9);
+  padding: 30px;
+  border-radius: 14px;
+  width: 280px;
+  text-align: center;
+  animation: modalPop 0.4s ease both;
+}
+
+@keyframes modalPop {
+  from { opacity: 0; transform: scale(0.92); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.modal-box h3 {
+  margin-bottom: 20px;
+}
+
+/* ROLE BUTTONS – CARD-LIKE FEEL */
+.modal-box button {
+  width: 100%;
+  margin: 10px 0;
+  padding: 12px;
+  border-radius: 14px;
+  border: none;
+  cursor: pointer;
+  background-color: #4fd1ff;
+  font-weight: bold;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.modal-box button:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 22px rgba(79,209,255,0.6);
+}
+</style>
 </head>
+
 <body>
 
 <header>
-    <div class="logo">TuneX</div>
-    <nav>
-        <button class="login-btn" onclick="openModal('login')">Login</button>
-        <button class="register-btn" onclick="openModal('register')">Register</button>
-    </nav>
+  <div class="logo">TuneX</div>
+  <nav>
+    <button class="login-btn" onclick="openModal('login')">Login</button>
+    <button class="register-btn" onclick="openModal('register')">Register</button>
+  </nav>
 </header>
 
 <section class="hero">
-    <h1>Stream Music Without Limits</h1>
-    <p>
-        Discover, stream, and enjoy music seamlessly.
-        Your music, Anytime, Anywhere.
-    </p>
-    <button onclick="openModal('login')">Get Started</button>
+  <h1>Stream Music Without Limits</h1>
+  <p>
+    Discover, stream, and enjoy music seamlessly.
+    Your music, Anytime, Anywhere.
+  </p>
+  <button onclick="openModal('login')">Get Started</button>
 </section>
 
 <section class="features">
-    <div class="feature-card">
-        <h3>High Quality Audio</h3>
-        <p>Experience crystal-clear sound with high bitrate streaming.</p>
-    </div>
-    <div class="feature-card">
-        <h3>Create Playlists</h3>
-        <p>Build playlists that match your mood.</p>
-    </div>
-    <div class="feature-card">
-        <h3>Offline Mode</h3>
-        <p>Listen to your favorite tracks anytime.</p>
-    </div>
+  <div class="feature-card">
+    <h3>High Quality Audio</h3>
+    <p>Experience crystal-clear sound with high bitrate streaming.</p>
+  </div>
+  <div class="feature-card">
+    <h3>Create Playlists</h3>
+    <p>Build playlists that match your mood.</p>
+  </div>
+  <div class="feature-card">
+    <h3>Offline Mode</h3>
+    <p>Listen to your favorite tracks anytime.</p>
+  </div>
 </section>
 
 <footer>
-    © 2025 TuneX Music Streaming. All rights reserved.
+  © 2025 TuneX Music Streaming. All rights reserved.
 </footer>
 
 <!-- ROLE MODAL -->
 <div class="modal" id="roleModal">
-    <div class="modal-box">
-        <h3 id="modalTitle"></h3>
-        <button onclick="goRole('USER')">User</button>
-        <button onclick="goRole('CREATOR')">Creator</button>
-        <button style="background:#333;color:white" onclick="closeModal()">Cancel</button>
-    </div>
+  <div class="modal-box">
+    <h3 id="modalTitle"></h3>
+    <button onclick="goRole('USER')">User</button>
+    <button onclick="goRole('CREATOR')">Creator</button>
+    <button style="background:#333;color:white" onclick="closeModal()">Cancel</button>
+  </div>
 </div>
 
 <script>
-    let action = "";
+let action = "";
 
-    function openModal(type) {
-        action = type;
-        document.getElementById("modalTitle").innerText =
-            type === "login" ? "Login as" : "Register as";
-        document.getElementById("roleModal").style.display = "flex";
-    }
+function openModal(type) {
+  action = type;
+  document.getElementById("modalTitle").innerText =
+    type === "login" ? "Login as" : "Register as";
+  document.getElementById("roleModal").style.display = "flex";
+}
 
-    function closeModal() {
-        document.getElementById("roleModal").style.display = "none";
-    }
+function closeModal() {
+  document.getElementById("roleModal").style.display = "none";
+}
 
-    function goRole(role) {
-        window.location.href =
-            action === "login"
-                ? `/login?role=${role}`
-                : `/register?role=${role}`;
-    }
+function goRole(role) {
+  window.location.href =
+    action === "login"
+      ? `/login?role=${role}`
+      : `/register?role=${role}`;
+}
 </script>
 
 </body>

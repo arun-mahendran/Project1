@@ -53,6 +53,9 @@ class Song(db.Model):
     # TEMP: allow NULL until duration logic added
     duration = db.Column(db.Integer, nullable=True)
 
+    # NEW: Track how many times the song was played
+    play_count = db.Column(db.Integer, default=0)
+
     # WHO UPLOADED THE SONG
     creator_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), nullable=False)
 

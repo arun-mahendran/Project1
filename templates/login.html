@@ -75,16 +75,45 @@
         text-decoration: none;
         font-weight: bold;
     }
+
+    /* NEW: ALERT BOX */
+    .alert {
+        padding: 14px;
+        margin: 16px 0;
+        border-radius: 10px;
+        font-size: 14px;
+        animation: slideDown 0.4s ease;
+        backdrop-filter: blur(8px);
+    }
+
+    .alert-error {
+        background: rgba(255, 107, 107, 0.2);
+        border: 1px solid rgba(255, 107, 107, 0.4);
+        color: #ff6b6b;
+    }
+
+    @keyframes slideDown {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
 </style>
 </head>
 
 <body>
 
 <div class="box">
-    <!-- BACK ARROW -->
     <a class="back" onclick="goBack()">←</a>
 
     <h2 id="title">Login</h2>
+
+    <!-- NEW: ERROR ALERT -->
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <div class="alert alert-error">
+          {{ messages[0] }}
+        </div>
+      {% endif %}
+    {% endwith %}
 
     <form method="POST">
         <input type="hidden" name="role" id="role">

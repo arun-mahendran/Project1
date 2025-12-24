@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<link rel="icon" type="image/png" href="{{ url_for('static', filename='tunex.png') }}">
 <title>TuneX | Creator Studio</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -14,6 +15,7 @@
   --muted: rgba(255,255,255,0.65);
   --accent: #4fd1ff;
   --danger: #ff6b6b;
+  --success: #10b981;
   --radius-lg: 22px;
   --radius-md: 14px;
   --blur: blur(16px);
@@ -26,6 +28,7 @@ body.light {
   --border: rgba(0,0,0,0.08);
   --text: #111;
   --muted: rgba(0,0,0,0.6);
+  --success: #059669;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -37,20 +40,41 @@ body {
   color: var(--text);
 }
 
+/* OVERLAY FOR BLUR */
+#overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.25);
+  backdrop-filter: blur(6px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  z-index: 90;
+}
+#overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* HEADER */
 header {
-  position: sticky;
+  position: fixed;
   top: 0;
+  left: 0;
+  right: 0;
   padding: 18px 36px;
   display: flex;
   justify-content: space-between;
+  align-items: center;
   backdrop-filter: var(--blur);
   background: rgba(0,0,0,0.35);
   border-bottom: 1px solid var(--border);
+  z-index: 100;
 }
 
 .logo { font-size: 22px; font-weight: 700; }
 
-.avatar-wrapper { position: relative; }
+.avatar-wrapper { position: relative; z-index: 110; }
 
 .avatar {
   width: 44px;
@@ -76,6 +100,7 @@ header {
   pointer-events: none;
   transform: translateY(-10px);
   transition: var(--transition);
+  z-index: 120;
 }
 
 .menu.active {
@@ -97,31 +122,130 @@ header {
 
 .container {
   max-width: 1200px;
-  margin: auto;
-  padding: 50px 24px 80px;
+  margin: 140px auto 80px;
+  padding: 0 24px 80px;
 }
 
 .grid {
   display: grid;
   grid-template-columns: 420px 1fr;
   gap: 30px;
+  align-items: start;
 }
 
 @media (max-width: 900px) {
   .grid { grid-template-columns: 1fr; }
 }
 
-.card {
+/* UPLOAD CARD */
+.card-upload {
   background: var(--glass);
   border-radius: var(--radius-lg);
   border: 1px solid var(--border);
   padding: 28px;
   backdrop-filter: var(--blur);
+  height: fit-content;
 }
+
+/* MANAGE SONGS CARD */
+.card-manage {
+  background: var(--glass);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  padding: 28px;
+  backdrop-filter: var(--blur);
+  display: flex;
+  flex-direction: column;
+  height: 80vh;
+  max-height: 800px;
+}
+
+.card-manage h3 {
+  margin-bottom: 24px;
+}
+
+.manage-content {
+  flex: 1;
+  overflow-y: auto;
+  margin-top: 16px;
+  padding-right: 8px;
+}
+
+.manage-content::-webkit-scrollbar {
+  width: 6px;
+}
+.manage-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+.manage-content::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.2);
+  border-radius: 3px;
+}
+
+#songSearch {
+  width: 100%;
+  padding: 14px;
+  border-radius: var(--radius-md);
+  background: rgba(255,255,255,0.18);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 15px;
+}
+
+#songSearch::placeholder {
+  color: var(--muted);
+}
+
+.song-row {
+  display: grid;
+  grid-template-columns: 1fr 280px auto;
+  gap: 20px;
+  align-items: center;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.song-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.song-title-input {
+  font-size: 16px;
+  font-weight: 500;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  width: 100%;
+}
+
+.song-player audio {
+  width: 100%;
+  height: 36px;
+}
+
+.song-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-self: end;
+}
+
+.song-actions button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  color: var(--text);
+}
+
+.delete-btn { color: var(--danger); }
+.save-btn { color: var(--accent); }
+
+.genre { display: none; }
 
 label { font-size: 13px; color: var(--muted); }
 
-/* ===== INPUTS ===== */
 input, select {
   width: 100%;
   padding: 14px;
@@ -133,16 +257,31 @@ input, select {
   border: none;
 }
 
-/* 🔥 PLACEHOLDER FIX */
 input::placeholder {
   color: var(--muted);
   opacity: 1;
 }
 
-/* Dropdown options */
-select option {
-  background: #fff;
-  color: #000;
+select {
+  -webkit-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23ffffff' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+}
+
+body:not(.light) select {
+  background-color: rgba(255,255,255,0.12);
+}
+
+body:not(.light) select option {
+  background-color: #0f172a;
+  color: #ffffff;
+}
+
+body.light select option {
+  background-color: #ffffff;
+  color: #000000;
 }
 
 button.primary {
@@ -155,42 +294,6 @@ button.primary {
   cursor: pointer;
 }
 
-/* ===== MANAGE SONGS ===== */
-.song-row {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 16px;
-  padding: 14px 0;
-  border-bottom: 1px solid var(--border);
-}
-
-.song-title-input {
-  font-size: 16px;
-  font-weight: 500;
-  background: transparent;
-  border: none;
-  color: var(--text);
-  width: 100%;
-}
-
-.song-actions {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-}
-
-.song-actions button {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 16px;
-  color: var(--text);
-}
-
-.delete-btn { color: var(--danger); }
-.save-btn { color: var(--accent); }
-
-/* ===== DELETE MODAL ===== */
 .modal {
   position: fixed;
   inset: 0;
@@ -198,12 +301,10 @@ button.primary {
   display: none;
   align-items: center;
   justify-content: center;
-  z-index: 50;
+  z-index: 130;
 }
 
-.modal.active {
-  display: flex;
-}
+.modal.active { display: flex; }
 
 .modal-box {
   background: var(--glass);
@@ -242,10 +343,76 @@ button.primary {
   background: var(--danger);
   color: #fff;
 }
+
+h1 {
+  font-size: 26px;
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+h1 + p {
+  margin-bottom: 40px;
+  font-size: 15px;
+}
+
+/* ANALYTICS */
+.analytics-full {
+  background: var(--glass);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  padding: 28px;
+  backdrop-filter: var(--blur);
+  margin-top: 40px;
+}
+
+.analytics-full h4 {
+  margin: 0 0 20px 0;
+  color: var(--success);
+  font-size: 20px;
+}
+
+.analytics-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.stat-card {
+  text-align: center;
+  padding: 20px;
+  border-radius: 16px;
+  background: rgba(255,255,255,0.08);
+}
+
+.stat-number {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 8px;
+}
+
+.stat-label {
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.top-song {
+  font-size: 16px;
+  color: var(--success);
+  font-weight: 600;
+  margin-top: 12px;
+  opacity: 0.9;
+}
+
+body.light .analytics-full {
+  background: rgba(255,255,255,0.95);
+}
 </style>
 </head>
 
 <body>
+
+<div id="overlay" onclick="closeMenu()"></div>
 
 <header>
   <div class="logo">TuneX</div>
@@ -261,13 +428,15 @@ button.primary {
 </header>
 
 <div class="container">
-  <h1>Creator Studio</h1>
-  <p style="color:var(--muted);margin-bottom:36px;">Upload, manage and control your music</p>
+
+  <h1>Welcome, {{ username }} 👋</h1>
+  <p style="color:var(--muted);">
+    Upload, manage and control your music
+  </p>
 
   <div class="grid">
 
-    <!-- UPLOAD -->
-    <div class="card">
+    <div class="card-upload">
       <h3>Upload Track</h3><br>
       <form action="/creator/upload" method="POST" enctype="multipart/form-data">
         <label>Song Title</label>
@@ -287,37 +456,73 @@ button.primary {
       </form>
     </div>
 
-    <!-- MANAGE SONGS -->
-    <div class="card">
-      <h3>Manage Songs</h3><br>
+    <div class="card-manage">
+      <h3>Manage Songs</h3>
 
-      {% for song in songs %}
-      <div class="song-row">
+      <input type="text" id="songSearch" placeholder="Search by title or genre...">
 
-        <form action="/creator/edit/{{ song.song_id }}" method="POST" style="width:100%;">
-          <input class="song-title-input" name="title" value="{{ song.title }}" readonly>
-          <small style="color:var(--muted);">
-            {% set m = song.duration // 60 %}
-            {% set s = song.duration % 60 %}
-            {{ m }}:{{ '%02d' % s }}
-          </small>
-        </form>
+      <div class="manage-content">
+        {% for song in songs %}
+        <div class="song-row" 
+             data-title="{{ song.title | lower }}"
+             data-genre="{{ song.genre.genre_name | lower }}">
 
-        <div class="song-actions">
-          <button type="button" onclick="enableEdit(this)">✏️</button>
-          <button type="submit" class="save-btn" style="display:none"
-            onclick="this.closest('.song-row').querySelector('form').submit()">✔</button>
-          <button class="delete-btn" onclick="openDeleteModal(this)">🗑</button>
+          <div class="song-info">
+            <form action="/creator/edit/{{ song.song_id }}" method="POST" style="width:100%;">
+              <input class="song-title-input" name="title" value="{{ song.title }}" readonly>
+            </form>
+            <span class="genre">{{ song.genre.genre_name }}</span>
+          </div>
+
+          <div class="song-player">
+            <audio controls data-song-id="{{ song.song_id }}">
+              <source src="/{{ song.file_path }}" type="audio/mpeg">
+              Your browser does not support the audio element.
+            </audio>
+          </div>
+
+          <div class="song-actions">
+            <button type="button" onclick="enableEdit(this)">✏️</button>
+            <button type="submit" class="save-btn" style="display:none"
+              onclick="this.closest('.song-row').querySelector('form').submit()">✔</button>
+            <button class="delete-btn" onclick="openDeleteModal(this)">🗑</button>
+          </div>
+
         </div>
-
+        {% endfor %}
       </div>
-      {% endfor %}
     </div>
 
   </div>
+
+  <!-- ANALYTICS -->
+  <div class="analytics-full">
+    <h4>📊 Your Analytics</h4>
+    <div class="analytics-grid">
+      <div class="stat-card">
+        <div class="stat-number">{{ total_songs }}</div>
+        <div class="stat-label">Total Songs</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">{{ total_plays }}</div>
+        <div class="stat-label">Total Listens</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">{{ top_song.play_count if top_song else 0 }}</div>
+        <div class="stat-label">Most Played</div>
+        {% if top_song %}
+        <div class="top-song">
+          {{ top_song.title }} <span style="opacity:0.8; font-size:14px;">({{ top_song.play_count }} plays)</span>
+        </div>
+        {% else %}
+        <div class="top-song" style="opacity:0.6;">No plays yet</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
 </div>
 
-<!-- DELETE CONFIRM MODAL -->
 <div class="modal" id="deleteModal">
   <div class="modal-box">
     <h3>Delete Song?</h3>
@@ -335,13 +540,20 @@ button.primary {
 let deleteAction = "";
 
 function toggleMenu() {
-  document.getElementById("menu").classList.toggle("active");
+  const menu = document.getElementById("menu");
+  const overlay = document.getElementById("overlay");
+  menu.classList.toggle("active");
+  overlay.classList.toggle("active");
+}
+
+function closeMenu() {
+  document.getElementById("menu").classList.remove("active");
+  document.getElementById("overlay").classList.remove("active");
 }
 
 function toggleTheme() {
   document.body.classList.toggle("light");
-  localStorage.setItem("theme",
-    document.body.classList.contains("light") ? "light" : "dark");
+  localStorage.setItem("theme", document.body.classList.contains("light") ? "light" : "dark");
 }
 
 (function () {
@@ -354,16 +566,18 @@ function enableEdit(btn) {
   const row = btn.closest(".song-row");
   const input = row.querySelector(".song-title-input");
   const saveBtn = row.querySelector(".save-btn");
+  
   input.removeAttribute("readonly");
   input.focus();
+  const length = input.value.length;
+  input.setSelectionRange(length, length);
   saveBtn.style.display = "inline";
 }
 
-/* ===== DELETE FLOW ===== */
 function openDeleteModal(btn) {
   const songRow = btn.closest(".song-row");
-  const songId = songRow.querySelector("form").action;
-  deleteAction = songId.replace("/creator/edit/", "/creator/delete/");
+  const formAction = songRow.querySelector("form").action;
+  deleteAction = formAction.replace("/edit/", "/delete/");
   document.getElementById("deleteModal").classList.add("active");
 }
 
@@ -376,6 +590,62 @@ function confirmDelete() {
   form.action = deleteAction;
   form.submit();
 }
+
+/* SEARCH */
+document.getElementById("songSearch").addEventListener("input", () => {
+  const query = document.getElementById("songSearch").value.trim().toLowerCase();
+  const rows = document.querySelectorAll(".song-row");
+
+  rows.forEach(row => {
+    const title = row.dataset.title;
+    const genre = row.dataset.genre || "";
+    if (query === "" || title.includes(query) || genre.includes(query)) {
+      row.style.display = "grid";
+    } else {
+      row.style.display = "none";
+    }
+  });
+});
+
+/* IMPROVED PLAY TRACKING: Count only when ≥30% of song is listened */
+const audios = document.querySelectorAll("audio");
+
+audios.forEach(audio => {
+  let hasCountedPlay = false; // Prevent counting multiple times in one session
+
+  const checkProgress = () => {
+    if (hasCountedPlay) return;
+
+    const duration = audio.duration;
+    if (isNaN(duration) || duration === 0) return;
+
+    if (audio.currentTime >= duration * 0.3) { // 30% threshold
+      hasCountedPlay = true;
+
+      const songId = audio.dataset.songId;
+      if (songId) {
+        fetch(`/api/song/${songId}/play`, { method: 'POST' })
+          .catch(err => console.log("Play count update failed:", err));
+      }
+    }
+  };
+
+  // Monitor progress while playing
+  audio.addEventListener("timeupdate", checkProgress);
+
+  // Reset flag when user starts playing again
+  audio.addEventListener("play", () => {
+    hasCountedPlay = false;
+
+    // Pause all other audios
+    audios.forEach(other => {
+      if (other !== audio) {
+        other.pause();
+        other.currentTime = 0;
+      }
+    });
+  });
+});
 </script>
 
 </body>
