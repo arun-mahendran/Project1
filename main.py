@@ -140,7 +140,6 @@ def admin_dashboard():
     if 'ADMIN' not in session.get('roles', []):
         return redirect(url_for("login"))
 
-    # Fetch the current admin user object
     user = User.query.get(session["user_id"])
 
     all_users = User.query.all()
@@ -166,7 +165,7 @@ def admin_dashboard():
 
     return render_template(
         "admin_dashboard.html",
-        user=user,  # ← Now passing full user object
+        user=user,
         normal_users=normal_users,
         creators=creators,
         total_songs=total_songs,
@@ -342,8 +341,6 @@ def delete_song(song_id):
     return redirect(url_for("creator_dashboard"))
 
 
-# ... [all your existing code above remains the same] ...
-
 @app.route("/dashboard/analytics")
 def creator_analytics():
     if 'CREATOR' not in session.get('roles', []):
@@ -355,28 +352,27 @@ def creator_analytics():
     top_song = max(songs, key=lambda s: s.play_count, default=None) if songs else None
     notifications = Notification.query.filter_by(user_id=session["user_id"]).order_by(Notification.timestamp.desc()).all()
 
-    return render_template(
-        "creator_analytics.html", 
-        user=user,                 
-        username=session["username"],
-        total_songs=total_songs,
-        top_song=top_song,
-        notifications=notifications
-    )
+    return render_template("creator_analytics.html",
+                           username=session["username"],
+                           total_songs=total_songs,
+                           top_song=top_song,
+                           notifications=notifications)
 
 
-# ================= USER =================
+# ================= USER DASHBOARD (FOR BOTH REGULAR USERS AND CREATORS IN USER MODE) =================
 @app.route("/dashboard/user")
 def user_dashboard():
-    if 'USER' not in session.get('roles', []):
+    # Allow both USER and CREATOR roles
+    roles = session.get('roles', [])
+    if 'USER' not in roles and 'CREATOR' not in roles:
         return redirect(url_for("login"))
 
-    user_id = session.get("user_id")
-    current_user = User.query.get(user_id) if user_id else None
+    user_id = session["user_id"]
+    current_user = User.query.get(user_id)
 
     if not current_user:
         session.clear()
-        flash("Your session has expired or account was removed. Please log in again.", "error")
+        flash("Session expired. Please log in again.", "error")
         return redirect(url_for("login"))
 
     songs = Song.query.options(
@@ -405,7 +401,7 @@ def view_playlist(playlist_id):
     if playlist.user_id != user_id:
         return "Unauthorized", 403
 
-    current_user = User.query.get(user_id) if user_id else None
+    current_user = User.query.get(user_id)
     if not current_user:
         session.clear()
         flash("Session expired. Please log in again.", "error")
@@ -435,27 +431,115 @@ def view_playlist(playlist_id):
     )
 
 
-# ================= PLAY COUNT API =================
-@app.route('/api/song/<int:song_id>/play', methods=['POST'])
-def increment_play(song_id):
-    song = Song.query.get_or_404(song_id)
+# ================= PLAYLIST ROUTES =================
+@app.route("/playlist/create", methods=["POST"])
+def create_playlist():
+    if 'USER' not in session.get('roles', []) and 'CREATOR' not in session.get('roles', []):
+        return redirect(url_for("login"))
 
-    if 'user_id' in session:
-        user = User.query.get(session['user_id'])
-        if user.is_blocked:
-            return '', 403
+    playlist = Playlist(
+        playlist_name=request.form["name"],
+        user_id=session["user_id"]
+    )
+    db.session.add(playlist)
+    db.session.commit()
+    return redirect(url_for("user_dashboard"))
 
-        if 'USER' in session.get('roles', []):
-            song.play_count += 1
-            db.session.commit()
 
+@app.route("/playlist/add", methods=["POST"])
+def add_song_to_playlist():
+    if 'USER' not in session.get('roles', []) and 'CREATOR' not in session.get('roles', []):
+        return redirect(url_for("login"))
+
+    playlist_id = int(request.form["playlist_id"])
+    song_id = int(request.form["song_id"])
+
+    playlist = Playlist.query.get_or_404(playlist_id)
+    if playlist.user_id != session["user_id"]:
+        return "Unauthorized", 403
+
+    if PlaylistSong.query.filter_by(playlist_id=playlist_id, song_id=song_id).first():
+        return redirect(request.referrer or url_for("user_dashboard"))
+
+    next_position = (db.session.query(db.func.max(PlaylistSong.position))
+                    .filter_by(playlist_id=playlist_id).scalar() or 0) + 1
+
+    db.session.add(PlaylistSong(playlist_id=playlist_id, song_id=song_id, position=next_position))
+    db.session.commit()
+
+    return redirect(request.referrer or url_for("user_dashboard"))
+
+
+@app.route("/playlist/rename/<int:playlist_id>", methods=["POST"])
+def rename_playlist(playlist_id):
+    if 'USER' not in session.get('roles', []) and 'CREATOR' not in session.get('roles', []):
+        return redirect(url_for("login"))
+
+    playlist = Playlist.query.get_or_404(playlist_id)
+    if playlist.user_id != session["user_id"]:
+        return "Unauthorized", 403
+
+    playlist.playlist_name = request.form["name"].strip()
+    db.session.commit()
+    return redirect(url_for("user_dashboard"))
+
+
+@app.route("/playlist/delete/<int:playlist_id>", methods=["POST"])
+def delete_playlist(playlist_id):
+    if 'USER' not in session.get('roles', []) and 'CREATOR' not in session.get('roles', []):
+        return redirect(url_for("login"))
+
+    playlist = Playlist.query.get_or_404(playlist_id)
+    if playlist.user_id != session["user_id"]:
+        return "Unauthorized", 403
+
+    PlaylistSong.query.filter_by(playlist_id=playlist_id).delete()
+    db.session.delete(playlist)
+    db.session.commit()
+    return redirect(url_for("user_dashboard"))
+
+
+@app.route('/playlist/remove', methods=['POST'])
+def remove_from_playlist():
+    if 'USER' not in session.get('roles', []) and 'CREATOR' not in session.get('roles', []):
+        return redirect(url_for("login"))
+
+    playlist_id = int(request.form['playlist_id'])
+    song_id = int(request.form['song_id'])
+
+    playlist = Playlist.query.get_or_404(playlist_id)
+    if playlist.user_id != session['user_id']:
+        return "Unauthorized", 403
+
+    PlaylistSong.query.filter_by(playlist_id=playlist_id, song_id=song_id).delete()
+    db.session.commit()
+    return redirect(request.referrer or url_for('user_dashboard'))
+
+
+@app.route('/playlist/reorder/<int:playlist_id>', methods=['POST'])
+def reorder_playlist(playlist_id):
+    if 'USER' not in session.get('roles', []) and 'CREATOR' not in session.get('roles', []):
+        return '', 403
+
+    playlist = Playlist.query.get_or_404(playlist_id)
+    if playlist.user_id != session['user_id']:
+        return '', 403
+
+    data = request.get_json()
+    order = data['order']
+
+    for item in order:
+        ps = PlaylistSong.query.filter_by(playlist_id=playlist_id, song_id=item['song_id']).first()
+        if ps:
+            ps.position = item['position']
+
+    db.session.commit()
     return '', 204
 
 
-# ================= PROFILE - NOW FOR ADMIN, USER AND CREATOR =================
+# ================= PROFILE ROUTES =================
 @app.route("/profile")
 def profile():
-    # Allow access if user has ANY of these roles
     roles = session.get('roles', [])
     if 'ADMIN' not in roles and 'USER' not in roles and 'CREATOR' not in roles:
         return redirect(url_for("login"))
@@ -521,109 +605,20 @@ def change_password():
     return render_template("change_password.html", user=user)
 
 
-# ================= PLAYLIST ROUTES =================
-@app.route("/playlist/create", methods=["POST"])
-def create_playlist():
-    if 'USER' not in session.get('roles', []):
-        return redirect(url_for("login"))
+# ================= PLAY COUNT API =================
+@app.route('/api/song/<int:song_id>/play', methods=['POST'])
+def increment_play(song_id):
+    song = Song.query.get_or_404(song_id)
 
-    playlist = Playlist(
-        playlist_name=request.form["name"],
-        user_id=session["user_id"]
-    )
-    db.session.add(playlist)
-    db.session.commit()
-    return redirect(url_for("user_dashboard"))
+    if 'user_id' in session:
+        user = User.query.get(session['user_id'])
+        if user.is_blocked:
+            return '', 403
 
+        if 'USER' in session.get('roles', []) or 'CREATOR' in session.get('roles', []):
+            song.play_count += 1
+            db.session.commit()
 
-@app.route("/playlist/add", methods=["POST"])
-def add_song_to_playlist():
-    if 'USER' not in session.get('roles', []):
-        return redirect(url_for("login"))
-
-    playlist_id = int(request.form["playlist_id"])
-    song_id = int(request.form["song_id"])
-
-    playlist = Playlist.query.get_or_404(playlist_id)
-    if playlist.user_id != session["user_id"]:
-        return "Unauthorized", 403
-
-    if PlaylistSong.query.filter_by(playlist_id=playlist_id, song_id=song_id).first():
-        return redirect(request.referrer or url_for("user_dashboard"))
-
-    next_position = (db.session.query(db.func.max(PlaylistSong.position))
-                    .filter_by(playlist_id=playlist_id).scalar() or 0) + 1
-
-    db.session.add(PlaylistSong(playlist_id=playlist_id, song_id=song_id, position=next_position))
-    db.session.commit()
-
-    return redirect(request.referrer or url_for("user_dashboard"))
-
-
-@app.route("/playlist/rename/<int:playlist_id>", methods=["POST"])
-def rename_playlist(playlist_id):
-    if 'USER' not in session.get('roles', []):
-        return redirect(url_for("login"))
-
-    playlist = Playlist.query.get_or_404(playlist_id)
-    if playlist.user_id != session["user_id"]:
-        return "Unauthorized", 403
-
-    playlist.playlist_name = request.form["name"].strip()
-    db.session.commit()
-    return redirect(url_for("user_dashboard"))
-
-
-@app.route("/playlist/delete/<int:playlist_id>", methods=["POST"])
-def delete_playlist(playlist_id):
-    if 'USER' not in session.get('roles', []):
-        return redirect(url_for("login"))
-
-    playlist = Playlist.query.get_or_404(playlist_id)
-    if playlist.user_id != session["user_id"]:
-        return "Unauthorized", 403
-
-    PlaylistSong.query.filter_by(playlist_id=playlist_id).delete()
-    db.session.delete(playlist)
-    db.session.commit()
-    return redirect(url_for("user_dashboard"))
-
-
-@app.route('/playlist/remove', methods=['POST'])
-def remove_from_playlist():
-    if 'USER' not in session.get('roles', []):
-        return redirect(url_for("login"))
-
-    playlist_id = int(request.form['playlist_id'])
-    song_id = int(request.form['song_id'])
-
-    playlist = Playlist.query.get_or_404(playlist_id)
-    if playlist.user_id != session['user_id']:
-        return "Unauthorized", 403
-
-    PlaylistSong.query.filter_by(playlist_id=playlist_id, song_id=song_id).delete()
-    db.session.commit()
-    return redirect(request.referrer or url_for('user_dashboard'))
-
-
-@app.route('/playlist/reorder/<int:playlist_id>', methods=['POST'])
-def reorder_playlist(playlist_id):
-    if 'USER' not in session.get('roles', []):
-        return '', 403
-
-    playlist = Playlist.query.get_or_404(playlist_id)
-    if playlist.user_id != session['user_id']:
-        return '', 403
-
-    data = request.get_json()
-    order = data['order']
-
-    for item in order:
-        ps = PlaylistSong.query.filter_by(playlist_id=playlist_id, song_id=item['song_id']).first()
-        if ps:
-            ps.position = item['position']
-
-    db.session.commit()
     return '', 204
 
 

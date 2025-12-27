@@ -67,7 +67,7 @@ body {
   max-width: 600px;
 }
 
-/* Disable interactions on songs when blocked */
+/* Disable interactions when blocked */
 .blocked #songs-list {
   pointer-events: none;
   opacity: 0.6;
@@ -108,13 +108,33 @@ header {
   font-weight: 700;
 }
 
-/* AVATAR + NOTIFICATION WRAPPER */
+/* AVATAR + NOTIFICATION + CREATOR SWITCH WRAPPER */
 .avatar-wrapper {
   position: relative;
   z-index: 30;
   display: flex;
   align-items: center;
   gap: 16px;
+}
+
+/* CREATOR STUDIO SWITCH BUTTON */
+.creator-switch-btn {
+  padding: 10px 18px;
+  background: rgba(255,255,255,0.12);
+  border-radius: 14px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  text-decoration: none;
+  transition: var(--transition);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.creator-switch-btn:hover {
+  background: var(--accent);
+  color: #000;
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(79,209,255,0.5);
 }
 
 /* NOTIFICATION BELL */
@@ -214,12 +234,14 @@ header {
   background: var(--glass);
   border: 1px solid var(--border);
   border-radius: 14px;
-  min-width: 180px;
+  width: 200px;
   opacity: 0;
   pointer-events: none;
   transform: translateY(-10px);
   transition: var(--transition);
   z-index: 120;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  overflow: hidden;
 }
 
 .menu.active {
@@ -231,7 +253,7 @@ header {
 .menu button,
 .menu a {
   width: 100%;
-  padding: 12px 16px;
+  padding: 14px 20px;
   background: none;
   border: none;
   text-align: left;
@@ -239,11 +261,14 @@ header {
   cursor: pointer;
   text-decoration: none;
   display: block;
+  font-size: 15px;
+  box-sizing: border-box;
+  transition: background 0.2s ease;
 }
 
-.menu a:hover,
-.menu button:hover {
-  background: rgba(255,255,255,0.1);
+.menu button:hover,
+.menu a:hover {
+  background: rgba(255, 255, 255, 0.12);
 }
 
 /* LAYOUT */
@@ -493,6 +518,10 @@ body.light .playlist-menu {
   color: #ffffff;
 }
 
+.add-to-playlist select option:disabled {
+  color: var(--muted);
+}
+
 .add-to-playlist button {
   padding: 8px 14px;
   border-radius: 6px;
@@ -518,6 +547,14 @@ body.light .playlist-menu {
 .genre {
   display: none;
 }
+
+/* ARTIST LABEL */
+.artist-label {
+  font-size: 0.9em;
+  color: var(--muted);
+  margin-top: 4px;
+  font-weight: 500;
+}
 </style>
 </head>
 
@@ -533,12 +570,17 @@ body.light .playlist-menu {
 <header>
   <div class="logo">TuneX</div>
   <div class="avatar-wrapper">
+    <!-- CREATOR STUDIO BUTTON - ONLY FOR CREATORS -->
+    {% if 'CREATOR' in session.get('roles', []) %}
+    <a href="/dashboard/creator" class="creator-switch-btn">Creator Studio</a>
+    {% endif %}
+
     <!-- NOTIFICATION BELL -->
     <div class="notif-bell" onclick="toggleNotifMenu()">
       🔔
-      {% set unread_count = notifications | selectattr('read', 'equalto', False) | list | length %}
+      {% set unread_count = notifications | length %}
       {% if unread_count > 0 %}
-      <div class="notif-badge">{{ unread_count }}</div>
+      <div class="notif-badge" id="notifBadge">{{ unread_count }}</div>
       {% endif %}
     </div>
 
@@ -627,9 +669,7 @@ body.light .playlist-menu {
       <div class="track" draggable="true" data-song-id="{{ song.song_id }}">
         <div>
           <strong>{{ song.title }}</strong>
-          <div style="font-size: 0.9em; color: var(--muted); margin-top: 4px;">
-            {{ song.creator.username }}
-          </div>
+          <div class="artist-label">Artist: {{ song.creator.username }}</div>
         </div>
         <span class="genre">{{ song.genre.genre_name }}</span>
 
@@ -642,6 +682,7 @@ body.light .playlist-menu {
           <form action="/playlist/add" method="POST">
             <input type="hidden" name="song_id" value="{{ song.song_id }}">
             <select name="playlist_id" required {% if is_blocked %}disabled{% endif %}>
+              <option value="" disabled selected>Select Playlist</option>
               {% for p in playlists %}
               <option value="{{ p.playlist_id }}">{{ p.playlist_name }}</option>
               {% endfor %}
@@ -692,6 +733,9 @@ document.querySelectorAll('.notif-time[data-timestamp]').forEach(el => {
   el.textContent = formatRelativeTime(el.dataset.timestamp);
 });
 
+const notifBadge = document.getElementById("notifBadge");
+const currentCount = {{ notifications|length }};
+
 function toggleNotifMenu() {
   const notifMenu = document.getElementById("notifMenu");
   notifMenu.classList.toggle("active");
@@ -699,17 +743,14 @@ function toggleNotifMenu() {
   document.getElementById("overlay").classList.toggle("active");
 
   if (notifMenu.classList.contains("active")) {
-    localStorage.setItem("lastSeenUserNotificationCount", {{ notifications|length }});
-    const badge = document.querySelector(".notif-badge");
-    if (badge) badge.style.display = "none";
+    localStorage.setItem("lastSeenUserNotificationCount", currentCount);
+    if (notifBadge) notifBadge.style.display = "none";
   }
 }
 
 const lastSeen = parseInt(localStorage.getItem("lastSeenUserNotificationCount") || "0");
-const currentCount = {{ notifications|length }};
-if (lastSeen >= currentCount) {
-  const badge = document.querySelector(".notif-badge");
-  if (badge) badge.style.display = "none";
+if (lastSeen >= currentCount && notifBadge) {
+  notifBadge.style.display = "none";
 }
 
 function toggleMenu() {
@@ -764,7 +805,7 @@ audios.forEach(currentAudio => {
 });
 {% endif %}
 
-/* BLOCKED USER: ALERT ON CLICK */
+/* BLOCKED USER ALERT */
 {% if is_blocked %}
 document.querySelectorAll('.track, audio').forEach(el => {
   el.addEventListener('click', e => {
@@ -793,9 +834,8 @@ searchInput.addEventListener("input", () => {
   document.getElementById("no-results").style.display = hasResults ? "none" : "block";
 });
 
-/* SORT (only in playlist) */
+/* SORT */
 let isSortedAlphabetically = false;
-
 function toggleSort() {
   isSortedAlphabetically = !isSortedAlphabetically;
   const sortBtn = document.getElementById("sortBtn");
@@ -805,15 +845,9 @@ function toggleSort() {
   const trackArray = Array.from(container.querySelectorAll(".track"));
 
   if (isSortedAlphabetically) {
-    trackArray.sort((a, b) => {
-      const titleA = a.querySelector("strong").textContent.trim();
-      const titleB = b.querySelector("strong").textContent.trim();
-      return titleA.localeCompare(titleB);
-    });
+    trackArray.sort((a, b) => a.querySelector("strong").textContent.trim().localeCompare(b.querySelector("strong").textContent.trim()));
   } else {
-    trackArray.sort((a, b) => {
-      return a.dataset.originalIndex - b.dataset.originalIndex;
-    });
+    trackArray.sort((a, b) => a.dataset.originalIndex - b.dataset.originalIndex);
   }
 
   trackArray.forEach(track => container.appendChild(track));
@@ -824,33 +858,26 @@ document.querySelectorAll("#songs-list .track").forEach((track, index) => {
   track.dataset.originalIndex = index;
 });
 
-/* DRAG & DROP REORDERING (only in playlist and if not blocked) */
+/* DRAG & DROP REORDERING */
 {% if active_playlist and not is_blocked %}
 let draggedTrack = null;
-
 tracks.forEach(track => {
   track.addEventListener("dragstart", e => {
     draggedTrack = track;
     track.classList.add("dragging");
   });
-
   track.addEventListener("dragend", () => {
     track.classList.remove("dragging");
     draggedTrack = null;
     updatePlaylistOrder();
   });
-
-  track.addEventListener("dragover", e => {
-    e.preventDefault();
-  });
-
+  track.addEventListener("dragover", e => e.preventDefault());
   track.addEventListener("drop", e => {
     e.preventDefault();
     if (draggedTrack && draggedTrack !== track) {
       const allTracks = Array.from(document.querySelectorAll("#songs-list .track"));
       const fromIndex = allTracks.indexOf(draggedTrack);
       const toIndex = allTracks.indexOf(track);
-
       if (fromIndex < toIndex) {
         track.parentNode.insertBefore(draggedTrack, track.nextSibling);
       } else {
@@ -866,7 +893,6 @@ function updatePlaylistOrder() {
     song_id: t.dataset.songId,
     position: index + 1
   }));
-
   fetch('/playlist/reorder/{{ active_playlist.playlist_id }}', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -875,6 +901,5 @@ function updatePlaylistOrder() {
 }
 {% endif %}
 </script>
-
 </body>
 </html>

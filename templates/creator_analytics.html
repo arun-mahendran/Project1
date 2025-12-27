@@ -189,36 +189,45 @@ header {
 .menu {
   position: absolute;
   right: 0;
-  top: 56px;
+  top: 54px;
   background: var(--glass);
   border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  min-width: 180px;
+  border-radius: 14px;
+  width: 200px; 
   opacity: 0;
   pointer-events: none;
   transform: translateY(-10px);
   transition: var(--transition);
   z-index: 120;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  overflow: hidden; 
 }
+
 .menu.active {
   opacity: 1;
   pointer-events: auto;
   transform: translateY(0);
 }
-.menu button, .menu a {
+
+.menu button,
+.menu a {
   width: 100%;
-  padding: 16px 20px;
+  padding: 14px 20px; 
   background: none;
   border: none;
   text-align: left;
   color: var(--text);
   cursor: pointer;
   text-decoration: none;
-  font-size: 15px;
   display: block;
+  font-size: 15px;
+  box-sizing: border-box; 
+  transition: background 0.2s ease;
 }
-.menu a:hover, .menu button:hover {
-  background: rgba(255,255,255,0.12);
+
+.menu button:hover,
+.menu a:hover {
+  background: rgba(255, 255, 255, 0.12);
 }
 /* PERFECT CENTERING - NO SCROLL */
 main {
@@ -295,8 +304,11 @@ main {
     <!-- DASHBOARD BUTTON -->
     <a href="/dashboard/creator" class="nav-btn">Dashboard</a>
 
-    <!-- ANALYTICS BUTTON (ACTIVE - SAME STYLE AS DASHBOARD) -->
-    <div class="nav-btn analytics-btn">Analytics</div>
+    <!-- USER ACCOUNT BUTTON -->
+    <a href="/dashboard/user" class="nav-btn">User Account</a>
+
+    <!-- ANALYTICS BUTTON (ACTIVE) -->
+    <div class="analytics-btn">Analytics</div>
 
     <!-- NOTIFICATION BELL -->
     <div class="notif-bell" onclick="toggleNotifMenu()">

@@ -74,7 +74,7 @@ header {
   align-items: center;
   gap: 16px;
 }
-/* DASHBOARD & ANALYTICS BUTTONS - SAME STYLE AS IN ANALYTICS PAGE */
+/* DASHBOARD & ANALYTICS BUTTONS */
 .nav-btn {
   padding: 10px 18px;
   background: rgba(255,255,255,0.12);
@@ -92,7 +92,6 @@ header {
   transform: translateY(-4px);
   box-shadow: 0 8px 20px rgba(79,209,255,0.5);
 }
-/* ACTIVE PAGE BUTTON (DASHBOARD) */
 .dashboard-active {
   background: var(--accent);
   color: #000;
@@ -205,7 +204,8 @@ header {
   pointer-events: auto;
   transform: translateY(0);
 }
-.menu button, .menu a {
+.menu button,
+.menu a {
   width: 100%;
   padding: 16px 20px;
   background: none;
@@ -216,8 +216,10 @@ header {
   text-decoration: none;
   font-size: 15px;
   display: block;
+  transition: background 0.2s ease;
 }
-.menu a:hover, .menu button:hover {
+.menu a:hover,
+.menu button:hover {
   background: rgba(255,255,255,0.12);
 }
 .container {
@@ -410,7 +412,7 @@ button.primary {
   background: var(--danger);
   color: #fff;
 }
-/* PERFECT WELCOME MESSAGE */
+/* WELCOME MESSAGE */
 .welcome-heading {
   font-size: 32px;
   font-weight: 700;
@@ -448,41 +450,37 @@ button.primary {
 <header>
   <div class="logo">TuneX</div>
   <div class="avatar-wrapper">
-    <!-- DASHBOARD BUTTON (ACTIVE PAGE) -->
-    <div class="nav-btn dashboard-active">Dashboard</div>
-
-    <!-- ANALYTICS BUTTON -->
+    <div class="nav-btn dashboard-active">Creator Studio</div>
+    <a href="/dashboard/user" class="nav-btn">User Account</a>
     <a href="/dashboard/analytics" class="nav-btn">Analytics</a>
 
-    <!-- NOTIFICATION BELL -->
+    <!-- NOTIFICATION BELL WITH UNREAD COUNT -->
     <div class="notif-bell" onclick="toggleNotifMenu()">
       🔔
-      <div class="notif-badge" id="notifBadge">
-        {{ notifications|length }}
-      </div>
+      {% set unread_count = notifications | length %}
+      {% if unread_count > 0 %}
+      <div class="notif-badge" id="notifBadge">{{ unread_count }}</div>
+      {% endif %}
     </div>
 
-    <!-- AVATAR -->
     <div class="avatar" onclick="toggleMenu()">
       {{ username[0]|upper }}
     </div>
 
-    <!-- NOTIFICATION DROPDOWN -->
-<div class="notif-menu" id="notifMenu">
-  <div class="notif-header">Notifications</div>
-  {% if notifications %}
-    {% for notif in notifications %}
-    <div class="notif-item">
-      {{ notif.message }}
-      <div class="notif-time" data-timestamp="{{ notif.timestamp.isoformat() }}"></div>
+    <div class="notif-menu" id="notifMenu">
+      <div class="notif-header">Notifications</div>
+      {% if notifications %}
+        {% for notif in notifications %}
+        <div class="notif-item">
+          {{ notif.message }}
+          <div class="notif-time" data-timestamp="{{ notif.timestamp.isoformat() }}"></div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="notif-item" style="color: var(--muted);">No notifications yet.</div>
+      {% endif %}
     </div>
-    {% endfor %}
-  {% else %}
-    <div class="notif-item" style="color: var(--muted);">No notifications yet.</div>
-  {% endif %}
-</div>
 
-    <!-- USER MENU -->
     <div class="menu" id="menu">
       <button onclick="toggleTheme()">Toggle Theme</button>
       <a href="/profile">Profile</a>
@@ -492,7 +490,6 @@ button.primary {
 </header>
 
 <div class="container">
-  <!-- WELCOME -->
   <h1 class="welcome-heading">Welcome, {{ username }} 👋</h1>
   <p class="welcome-sub">
     Upload, manage and control your music
@@ -565,7 +562,6 @@ button.primary {
 <script>
 let deleteAction = "";
 
-// Relative time for notifications
 function formatRelativeTime(dateStr) {
   const date = new Date(dateStr + 'Z');
   const now = new Date();
@@ -677,7 +673,7 @@ document.getElementById("songSearch").addEventListener("input", () => {
   });
 });
 
-/* PLAY TRACKING - 30% listened = 1 play */
+/* PLAY TRACKING */
 const audios = document.querySelectorAll("audio");
 audios.forEach(audio => {
   let hasCountedPlay = false;
