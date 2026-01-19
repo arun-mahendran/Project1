@@ -57,6 +57,31 @@ The first load may take up to 30–50 seconds due to cold start.
 
 ---
 
+## 📸 Screenshots
+
+### Home Page
+![Home Page](screenshots/home.png)
+
+### Login Page
+![Login Page](screenshots/login.png)
+
+### Register Page
+![Register Page](screenshots/register.png)
+
+### User Dashboard
+![User Dashboard](screenshots/user-dashboard.png)
+
+### Creator Dashboard
+![Creator Dashboard](screenshots/creator-dashboard.png)
+
+### Admin Dashboard
+![Admin Dashboard](screenshots/admin-dashboard.png)
+
+### AI Lyrics Generation
+![AI Lyrics](screenshots/lyrics.png)
+
+---
+
 ## 🧱 Tech Stack
 
 | Layer | Technology |
