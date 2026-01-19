@@ -3,4 +3,3 @@ venv/
 __pycache__/
 instance/
 .vscode/
-migrate_sqlite_to_postgres.py
