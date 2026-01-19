@@ -7,3 +7,4 @@ Werkzeug
 requests
 mutagen
 google-generativeai
+psycopg2-binary
