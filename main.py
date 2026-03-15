@@ -15,6 +15,7 @@ from controller.models import (
     Playlist, PlaylistSong, Notification
 )
 from sqlalchemy.orm import joinedload
+from flask import send_from_directory
 
 import google.generativeai as genai  # Gemini AI
 
@@ -722,6 +723,10 @@ def api_get_users():
         "users": user_list,
         "total": len(user_list)
     })
+
+@app.route('/sitemap.xml')
+def sitemap():
+    return send_from_directory('static', 'sitemap.xml')
 
 # ================= RUN =================
 if __name__ == "__main__":
